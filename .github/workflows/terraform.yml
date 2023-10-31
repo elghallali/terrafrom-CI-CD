@@ -73,21 +73,51 @@ jobs:
       uses: hashicorp/setup-terraform@v1
       with:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+        
+    - name: tfsec
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        soft_fail: true
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      run: terraform init
+      run: |
+        cd terraform
+        terraform init
+      working-directory: ${{ github.workspace }}
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
-      run: terraform fmt -check
+      run:  |
+        cd terraform
+        terraform fmt -check
+      working-directory: ${{ github.workspace }}
+
+    # Checks that all Terraform configuration files are validate
+    - name: Terraform Validate
+      run:  |
+        cd terraform
+        terraform validate
+      working-directory: ${{ github.workspace }}
+
+    - name: Run tfsec on Terraform code
+      run: |
+        cd terraform
+        tfsec .
+      working-directory: ${{ github.workspace }}
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan
-      run: terraform plan -input=false
+      run: |
+        cd terraform
+        terraform plan -input=false -out=tfplan
+      working-directory: ${{ github.workspace }}
 
       # On push to "master", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push' && success() # Only apply if the previous steps were successful
+      run: |
+        cd terraform
+        terraform apply -auto-approve -input=false tfplan
+      working-directory: ${{ github.workspace }}
