@@ -100,11 +100,10 @@ jobs:
         terraform validate
       working-directory: ${{ github.workspace }}
 
-    - name: Run tfsec on Terraform code
-      run: |
-        cd terraform
-        tfsec .
-      working-directory: ${{ github.workspace }}
+    - name: tfsec 2
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        soft_fail: true
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan
