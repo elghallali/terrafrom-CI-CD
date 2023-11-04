@@ -81,17 +81,26 @@ jobs:
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       id: fmt
-      run:  terraform fmt -check
+      run:  |
+        cd terraform
+        terraform fmt -check
+        working-directory: ${{ github.workspace }}
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       id: init
-      run: terraform init
+      run: |
+        cd terraform
+        terraform init
+        working-directory: ${{ github.workspace }}
 
     # Checks that all Terraform configuration files are validate
     - name: Terraform Validate
       id: validate
-      run: terraform validate
+      run: |
+        cd terraform
+        terraform validate
+        working-directory: ${{ github.workspace }}
 
     - name: tfsec 
       uses: aquasecurity/tfsec-action@v1.0.0
@@ -101,10 +110,16 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       id: plan
-      run: terraform plan -input=false -out=tfplan
+      run: |
+        cd terraform
+        terraform plan -input=false -out=tfplan
+        working-directory: ${{ github.workspace }}
 
       # On push to "master", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     - name: Terraform Apply
       if: github.ref == 'refs/heads/"master"' && github.event_name == 'push' && success() # Only apply if the previous steps were successful
-      run: terraform apply -auto-approve -input=false tfplan
+      run: |
+        cd terraform
+        terraform apply -auto-approve -input=false tfplan
+        working-directory: ${{ github.workspace }}
